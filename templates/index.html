@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CKD Prediction</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            width: 50%;
+            margin: 20px auto;
+        }
+        h2 {
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+        }
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            border: none;
+            box-shadow: 0 0 5px white;
+        }
+        .btn-primary {
+            background: #ff9800;
+            border: none;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .btn-primary:hover {
+            background: #e68900;
+        }
+        #result {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .result-high {
+            background-color: rgba(220, 53, 69, 0.7);
+        }
+        .result-low {
+            background-color: rgba(40, 167, 69, 0.7);
+        }
+        .probability-bar {
+            height: 20px;
+            background: linear-gradient(to right, #198754, #dc3545);
+            border-radius: 10px;
+            margin: 10px 0;
+            position: relative;
+        }
+        .probability-marker {
+            position: absolute;
+            width: 4px;
+            height: 30px;
+            background: #fff;
+            top: -5px;
+            transform: translateX(-50%);
+        }
+        .probability-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            color: #fff;
+        }
+        .preset-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .btn-risk-high {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-risk-medium {
+            background-color: #ffc107;
+            color: black;
+        }
+        .btn-risk-low {
+            background-color: #198754;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Chronic Kidney Disease Prediction</h2>
+            <div class="preset-buttons">
+                <button type="button" class="btn btn-sm btn-risk-low" id="lowRiskBtn">Low Risk sample data</button>
+                <button type="button" class="btn btn-sm btn-risk-medium" id="mediumRiskBtn">Medium Risk sample data</button>
+                <button type="button" class="btn btn-sm btn-risk-high" id="highRiskBtn">High Risk sample data</button>
+            </div>
+        </div>
+        
+        <form id="ckd-form" method="POST" action="/predict">
+            <!-- Numerical Inputs -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="age" class="form-label">Age</label>
+                        <input type="number" class="form-control" name="age" id="age" value="52" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bp" class="form-label">Blood Pressure</label>
+                        <input type="number" class="form-control" name="bp" id="bp" value="80" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sg" class="form-label">Specific Gravity</label>
+                        <input type="number" step="0.001" class="form-control" name="sg" id="sg" value="1.015" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="al" class="form-label">Albumin</label>
+                        <input type="number" class="form-control" name="al" id="al" value="2" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="su" class="form-label">Sugar</label>
+                        <input type="number" class="form-control" name="su" id="su" value="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bgr" class="form-label">Blood Glucose Random</label>
+                        <input type="number" class="form-control" name="bgr" id="bgr" value="160" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bu" class="form-label">Blood Urea</label>
+                        <input type="number" step="0.1" class="form-control" name="bu" id="bu" value="85" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="sc" class="form-label">Serum Creatinine</label>
+                        <input type="number" step="0.1" class="form-control" name="sc" id="sc" value="3.5" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sod" class="form-label">Sodium</label>
+                        <input type="number" class="form-control" name="sod" id="sod" value="135" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pot" class="form-label">Potassium</label>
+                        <input type="number" step="0.1" class="form-control" name="pot" id="pot" value="4.5" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="hemo" class="form-label">Hemoglobin</label>
+                        <input type="number" step="0.1" class="form-control" name="hemo" id="hemo" value="11.5" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pcv" class="form-label">Packed Cell Volume</label>
+                        <input type="number" class="form-control" name="pcv" id="pcv" value="35" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="wc" class="form-label">White Blood Cell Count</label>
+                        <input type="number" class="form-control" name="wc" id="wc" value="7500" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="rc" class="form-label">Red Blood Cell Count</label>
+                        <input type="number" step="0.1" class="form-control" name="rc" id="rc" value="4.2" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categorical Inputs -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="rbc" class="form-label">Red Blood Cells</label>
+                        <select class="form-select" name="rbc" id="rbc" required>
+                            <option value="normal">Normal</option>
+                            <option value="abnormal" selected>Abnormal</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pc" class="form-label">Pus Cell</label>
+                        <select class="form-select" name="pc" id="pc" required>
+                            <option value="normal" selected>Normal</option>
+                            <option value="abnormal">Abnormal</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pcc" class="form-label">Pus Cell Clumps</label>
+                        <select class="form-select" name="pcc" id="pcc" required>
+                            <option value="present">Present</option>
+                            <option value="not present" selected>Not Present</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ba" class="form-label">Bacteria</label>
+                        <select class="form-select" name="ba" id="ba" required>
+                            <option value="present">Present</option>
+                            <option value="not present" selected>Not Present</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="htn" class="form-label">Hypertension</label>
+                        <select class="form-select" name="htn" id="htn" required>
+                            <option value="yes" selected>Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dm" class="form-label">Diabetes Mellitus</label>
+                        <select class="form-select" name="dm" id="dm" required>
+                            <option value="yes">Yes</option>
+                            <option value="no" selected>No</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cad" class="form-label">Coronary Artery Disease</label>
+                        <select class="form-select" name="cad" id="cad" required>
+                            <option value="yes">Yes</option>
+                            <option value="no" selected>No</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="appet" class="form-label">Appetite</label>
+                        <select class="form-select" name="appet" id="appet" required>
+                            <option value="good" selected>Good</option>
+                            <option value="poor">Poor</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pe" class="form-label">Pedal Edema</label>
+                        <select class="form-select" name="pe" id="pe" required>
+                            <option value="yes">Yes</option>
+                            <option value="no" selected>No</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ane" class="form-label">Anemia</label>
+                        <select class="form-select" name="ane" id="ane" required>
+                            <option value="yes" selected>Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Predict</button>
+        </form>
+        
+        {% if prediction is not none %}
+        <div id="result" class="{% if prediction[0] %}result-high{% else %}result-low{% endif %}">
+            <div class="mb-3">
+                {% if prediction[0] %}
+                    High Risk of Chronic Kidney Disease
+                {% else %}
+                    Low Risk of Chronic Kidney Disease
+                {% endif %}
+            </div>
+            
+            <div class="mt-3">
+                <div class="probability-bar">
+                    <div class="probability-marker" style="left: {{ ckd_prob }}%"></div>
+                </div>
+                <div class="probability-labels">
+                    <span>Low Risk ({{ "%.1f"|format(non_ckd_prob) }}%)</span>
+                    <span>High Risk ({{ "%.1f"|format(ckd_prob) }}%)</span>
+                </div>
+                <div class="text-center mt-2">
+                    CKD Risk is: {{ "%.1f"|format(ckd_prob) }}%
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // High Risk patient values
+            document.getElementById('highRiskBtn').addEventListener('click', function() {
+                // Extreme values known to trigger high CKD risk
+                document.getElementById('age').value = '57';
+                document.getElementById('bp').value = '90';
+                document.getElementById('sg').value = '1.015';
+                document.getElementById('al').value = '5';
+                document.getElementById('su').value = '0';
+                document.getElementById('bgr').value = '121';
+                document.getElementById('bu').value = '322';
+                document.getElementById('sc').value = '13.0';
+                document.getElementById('sod').value = '126';
+                document.getElementById('pot').value = '4.8';
+                document.getElementById('hemo').value = '8.0';
+                document.getElementById('pcv').value = '24';
+                document.getElementById('wc').value = '4200';
+                document.getElementById('rc').value = '3.3';
+                
+                // Set select options
+                selectOption('rbc', 'abnormal');
+                selectOption('pc', 'abnormal');
+                selectOption('pcc', 'not present');
+                selectOption('ba', 'present');
+                selectOption('htn', 'yes');
+                selectOption('dm', 'yes');
+                selectOption('cad', 'yes');
+                selectOption('appet', 'poor');
+                selectOption('pe', 'yes');
+                selectOption('ane', 'yes');
+            });
+            
+            // Medium Risk patient values
+            document.getElementById('mediumRiskBtn').addEventListener('click', function() {
+                // Values that should give a less certain prediction
+                document.getElementById('age').value = '48';
+                document.getElementById('bp').value = '70';
+                document.getElementById('sg').value = '1.020';
+                document.getElementById('al').value = '1';
+                document.getElementById('su').value = '0';
+                document.getElementById('bgr').value = '150';
+                document.getElementById('bu').value = '36';
+                document.getElementById('sc').value = '1.8';
+                document.getElementById('sod').value = '137';
+                document.getElementById('pot').value = '4.3';
+                document.getElementById('hemo').value = '13.8';
+                document.getElementById('pcv').value = '44';
+                document.getElementById('wc').value = '8000';
+                document.getElementById('rc').value = '4.5';
+                
+                // Set select options - fewer risk factors than high risk
+                selectOption('rbc', 'normal');
+                selectOption('pc', 'normal');
+                selectOption('pcc', 'not present');
+                selectOption('ba', 'not present');
+                selectOption('htn', 'yes');
+                selectOption('dm', 'no');
+                selectOption('cad', 'no');
+                selectOption('appet', 'good');
+                selectOption('pe', 'no');
+                selectOption('ane', 'no');
+            });
+            
+            // Low Risk patient values
+            document.getElementById('lowRiskBtn').addEventListener('click', function() {
+                // Values characteristic of a healthy person
+                document.getElementById('age').value = '40';
+                document.getElementById('bp').value = '80';
+                document.getElementById('sg').value = '1.025';
+                document.getElementById('al').value = '0';
+                document.getElementById('su').value = '0';
+                document.getElementById('bgr').value = '140';
+                document.getElementById('bu').value = '10';
+                document.getElementById('sc').value = '1.2';
+                document.getElementById('sod').value = '150';
+                document.getElementById('pot').value = '4.6';
+                document.getElementById('hemo').value = '17.0';
+                document.getElementById('pcv').value = '48';
+                document.getElementById('wc').value = '10400';
+                document.getElementById('rc').value = '4.5';
+                
+                // Set select options - all healthy
+                selectOption('rbc', 'normal');
+                selectOption('pc', 'normal');
+                selectOption('pcc', 'not present');
+                selectOption('ba', 'not present');
+                selectOption('htn', 'no');
+                selectOption('dm', 'no');
+                selectOption('cad', 'no');
+                selectOption('appet', 'good');
+                selectOption('pe', 'no');
+                selectOption('ane', 'no');
+            });
+            
+            // Helper function to select an option in a dropdown
+            function selectOption(elementId, value) {
+                const select = document.getElementById(elementId);
+                for (let i = 0; i < select.options.length; i++) {
+                    if (select.options[i].value === value) {
+                        select.options[i].selected = true;
+                        break;
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html> 
